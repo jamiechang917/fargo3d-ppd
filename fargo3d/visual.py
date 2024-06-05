@@ -1,8 +1,9 @@
 from fargo3d.data import Data
+from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
-
+from matplotlib.animation import FuncAnimation
 
 def plot_velocity_profiles(data:Data, r_size:int, zr_min:float, zr_max:float,
                            phi_min=-np.pi, phi_max=np.pi, fluid='gas', coordinate='cyl'):
@@ -59,7 +60,8 @@ def plot_velocity_map(data:Data, r_bin:int, z_bin:int, scale:float,
                       phi_min=-np.pi, phi_max=np.pi,
                       r_min=None, r_max=None,
                       z_min=None, z_max=None,
-                      fluid='gas', coordinate='cyl'):
+                      fluid='gas', coordinate='cyl',
+                      animation=False, animation_kwargs={}):
     """
     Plot the 2D velocity map in the r-z plane.
     data: Data object
@@ -102,9 +104,12 @@ def plot_velocity_map(data:Data, r_bin:int, z_bin:int, scale:float,
               scale=scale, scale_units='inches', alpha=0.8, zorder=100, cmap='rainbow', clim=(0, 100))
     # cbar = fig.colorbar(quiver, ax=ax, orientation='vertical', pad=0.0, extend='both', label=r'$\delta v_{r}$ [m/s]')
 
-    ax.set_xlabel('r [AU]', fontsize=16, fontweight='bold')
-    ax.set_ylabel('z [AU]', fontsize=16, fontweight='bold')
-
+    
+    # time
+    time = data.snap * data.units["unit_time_onesnap"].to('yr').value
+    time_text = ax.text(0.02, 0.95, f'{time/1e6:.3f} Myr', transform=ax.transAxes, fontsize=12, 
+                        fontweight='bold', color='black', ha='left', va='top', 
+                        bbox=dict(facecolor='white', alpha=0.5, edgecolor='black', linewidth=1.5))
 
     # z/r
     for zr in [0.1, 0.2, 0.3, 0.4, 0.5]:
@@ -112,6 +117,8 @@ def plot_velocity_map(data:Data, r_bin:int, z_bin:int, scale:float,
         z = r * zr
         ax.plot(r, z, color='gray', linestyle='-', alpha=0.5)
 
+    ax.set_xlabel('r [AU]', fontsize=16, fontweight='bold')
+    ax.set_ylabel('z [AU]', fontsize=16, fontweight='bold')
 
     # beautify
     ax.xaxis.set_major_locator(MultipleLocator(50))
@@ -131,9 +138,29 @@ def plot_velocity_map(data:Data, r_bin:int, z_bin:int, scale:float,
         ax.set_ylim(z_min, z_max)
     else:
         ax.set_ylim(0.0, z_mesh_flatten.max().value)
-    
-    
-    plt.show(fig)
 
+    if animation:
+        data_kwargs = {"path": data.path, "n_dust": data.n_dust, "unit_length": data.units["unit_length"], "unit_mass": data.units["unit_mass"]}
+        # progress bar
+        pbar = tqdm(total=animation_kwargs["snap_end"] - animation_kwargs["snap_start"] + 1, desc='Plotting velocity map...')
+        # update function
+        def update(frame):
+            data = Data(snap=frame, **data_kwargs)
+            vr_mesh, vz_mesh = data.fluids["velocity"][fluid]["cyl_r"], data.fluids["velocity"][fluid]["cyl_z"]
+            vr_mesh_masked, vz_mesh_masked = vr_mesh[:, :, phi_mask], vz_mesh[:, :, phi_mask]
+            vr_mesh_flatten, vz_mesh_flatten = np.mean(vr_mesh_masked, axis=2), np.mean(vz_mesh_masked, axis=2)
+            vrz_mesh_flatten = np.sqrt(vr_mesh_flatten**2 + vz_mesh_flatten**2)
+            vr_mesh_norm = vr_mesh_flatten / vrz_mesh_flatten
+            vz_mesh_norm = vz_mesh_flatten / vrz_mesh_flatten
 
-    pass
+            pcm.set_array(vz_mesh_flatten.ravel())
+            quiver.set_UVC(vr_mesh_norm.value[::z_bin, ::r_bin], vz_mesh_norm.value[::z_bin, ::r_bin])
+            time = data.snap * data.units["unit_time_onesnap"].to('yr').value
+            time_text.set_text(f'{time/1e6:.3f} Myr')
+            pbar.update(1)
+        anim = FuncAnimation(fig, update, frames=np.arange(animation_kwargs["snap_start"], animation_kwargs["snap_end"]+1), interval=animation_kwargs["interval"])
+        anim.save('velocity_map_vrvz.mp4', writer='ffmpeg', dpi=300)
+        pbar.close()
+    else:
+        plt.show(fig)
+    return
