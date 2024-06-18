@@ -1,0 +1,9 @@
+ia = iatool()
+ia.fromfits(infile='lines.fits', outfile='lines.image', overwrite=True)
+ia.open('lines.image')
+ia.convolve2d(type='gauss', major='0.1arcsec', minor='0.1arcsec', pa='0.0deg', outfile='lines_conv.image')
+ia.done()
+ia.open('lines_conv.image')
+ia.tofits('lines_conv.fits', overwrite=True)
+ia.done()
+exit
