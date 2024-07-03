@@ -4,8 +4,8 @@ import radmc3dPy as r3d
 
 rt_params = {
     'dpc': 100.0,         # distance in parsecs
-    'widthkms': 5.0,      # km/s
-    'linenlam': 100,      # number of channels
+    'widthkms': 6.0,      # km/s
+    'linenlam': 120,      # number of channels
     'nu0': 219.560 * 1e9, # Hz
     
 }
