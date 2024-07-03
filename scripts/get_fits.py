@@ -16,4 +16,4 @@ if __name__ == '__main__':
     bandwidthmhz = (rt_params["nu0"]) * (2 * rt_params['widthkms'] / const.c.to('km/s').value / (rt_params['linenlam'] - 1))
     im.writeFits(fname="lines.fits", dpc=rt_params['dpc'],
                  casa=True, coord='00h00m00s +00d00m00s', 
-                 nu0=rt_params['nu0'], bandwidthmhz=bandwidthmhz)
+                 nu0=rt_params['nu0']*1e6, bandwidthmhz=bandwidthmhz)
