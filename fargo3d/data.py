@@ -87,6 +87,9 @@ class Data():
         coords['sph_phi'] = ((coords['sph_phi'][1:] + coords['sph_phi'][:-1]) / 2) * u.rad
         coords['sph_r'] = ((coords['sph_r'][1:] + coords['sph_r'][:-1]) / 2) * self.units["unit_length"]
         coords['sph_theta'] = ((coords['sph_theta'][1:] + coords['sph_theta'][:-1]) / 2) * u.rad
+        coords['domain_x'] = domains['x'] * u.rad
+        coords['domain_y'] = domains['y'] * self.units["unit_length"]
+        coords['domain_z'] = domains['z'] * u.rad
         return coords
 
     def _get_mesh(self) -> dict:

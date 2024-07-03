@@ -8,4 +8,5 @@ Currently work in progress, and this will be released as python package soon.
 ## Progress
 * [x] The visualization for FARGO-3D simulation data
 * [x] The radiative transfer (RADMC-3D) for FARGO-3D simulation data
+* [ ] The advanced visualization for FARGO-3D simulation data (FARGO3D_Visualization.ipynb)
 * [ ] The post-processing for FARGO-3D simulation data (diskmaster)
